@@ -113,4 +113,34 @@ describe("escapeHtml", () => {
     expect(escapeHtml('"quoted"')).toBe("&quot;quoted&quot;");
     expect(escapeHtml("a & b")).toBe("a &amp; b");
   });
+
+  it("escapes single quotes", () => {
+    expect(escapeHtml("'hello'")).toBe("&#039;hello&#039;");
+  });
+
+  it("handles multiple special characters", () => {
+    expect(escapeHtml('<div class="test">Hello & World</div>')).toBe(
+      '&lt;div class=&quot;test&quot;&gt;Hello &amp; World&lt;/div&gt;'
+    );
+  });
 });
+
+describe("sanitizeTopicName", () => {
+  it("removes curly braces", () => {
+    expect(sanitizeTopicName("Topic {name}")).toBe("Topic name");
+  });
+
+  it("removes angle brackets", () => {
+    expect(sanitizeTopicName("Topic <script>")).toBe("Topic script");
+  });
+
+  it("truncates to 200 characters", () => {
+    const longTopic = "a".repeat(300);
+    expect(sanitizeTopicName(longTopic).length).toBe(200);
+  });
+
+  it("handles null/undefined", () => {
+    expect(sanitizeTopicName(null as any)).toBe("");
+    expect(sanitizeTopicName(undefined as any)).toBe("");
+  });
+});;
