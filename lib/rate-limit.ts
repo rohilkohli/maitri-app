@@ -78,11 +78,15 @@ export function checkRateLimit(
  */
 function cleanupExpiredEntries(): void {
   const now = Date.now();
-  for (const [key, entry] of store.entries()) {
+  const keysToDelete: string[] = [];
+
+  store.forEach((entry, key) => {
     if (now > entry.resetAt) {
-      store.delete(key);
+      keysToDelete.push(key);
     }
-  }
+  });
+
+  keysToDelete.forEach(key => store.delete(key));
 }
 
 /**
