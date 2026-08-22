@@ -257,12 +257,15 @@ export default function OnboardingPage() {
         finalTopics = dynamicTopics;
       }
 
-      // 3. Save Course
+      // 3. Save Course to Firebase
       await saveCourse(`course-${userId}`, {
         userId,
         title: `${actualSubject} — ${actualExamGoal}`,
         topics: finalTopics,
       });
+
+      // 4. Save Topics to localStorage for dashboard retrieval
+      localStorage.setItem(`maitri-topics-${userId}`, JSON.stringify(finalTopics));
 
       toast({
         title: "Personalized Roadmap Initialized!",

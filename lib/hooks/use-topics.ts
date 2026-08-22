@@ -96,15 +96,12 @@ export function useTopics(userId: string | null | undefined) {
 
   useEffect(() => {
     async function loadUserCourses() {
-      if (!userId) {
-        setTopics(DEFAULT_SAMPLE_TOPICS);
-        setLoading(false);
-        return;
-      }
+      const effectiveUserId = userId || "demo-user";
 
       setLoading(true);
       try {
-        const rawCourses = await getUserCourses(userId);
+        // First, try to load from Firebase
+        const rawCourses = await getUserCourses(effectiveUserId);
         if (rawCourses && rawCourses.length > 0) {
           const parsedCourses: Course[] = rawCourses.map((c: any) => ({
             id: c.id,
@@ -118,12 +115,48 @@ export function useTopics(userId: string | null | undefined) {
           setActiveCourse(parsedCourses[0]);
           if (parsedCourses[0]?.topics?.length) {
             setTopics(parsedCourses[0].topics);
+            // Also save to localStorage as backup
+            localStorage.setItem(`maitri-topics-${effectiveUserId}`, JSON.stringify(parsedCourses[0].topics));
+            setLoading(false);
+            return;
           }
-        } else {
-          setTopics(DEFAULT_SAMPLE_TOPICS);
         }
+
+        // Fallback: Try to load from localStorage
+        const savedTopics = localStorage.getItem(`maitri-topics-${effectiveUserId}`);
+        if (savedTopics) {
+          try {
+            const parsedTopics = JSON.parse(savedTopics) as Topic[];
+            if (parsedTopics && parsedTopics.length > 0) {
+              setTopics(parsedTopics);
+              setLoading(false);
+              return;
+            }
+          } catch {
+            // Invalid JSON, ignore
+          }
+        }
+
+        // Final fallback: use default topics
+        setTopics(DEFAULT_SAMPLE_TOPICS);
       } catch (err) {
-        console.warn("Could not load user courses, using sample topics:", err);
+        console.warn("Could not load user courses, trying localStorage:", err);
+
+        // Try localStorage on error
+        const savedTopics = localStorage.getItem(`maitri-topics-${effectiveUserId}`);
+        if (savedTopics) {
+          try {
+            const parsedTopics = JSON.parse(savedTopics) as Topic[];
+            if (parsedTopics && parsedTopics.length > 0) {
+              setTopics(parsedTopics);
+              setLoading(false);
+              return;
+            }
+          } catch {
+            // Invalid JSON, ignore
+          }
+        }
+
         setTopics(DEFAULT_SAMPLE_TOPICS);
       } finally {
         setLoading(false);
