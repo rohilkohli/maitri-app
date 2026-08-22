@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useMemo } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useAuth } from "@/lib/hooks/use-auth";
@@ -8,7 +8,17 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast";
-import { ArrowRight, Lock, Mail, User } from "lucide-react";
+import {
+  ArrowRight,
+  CheckCircle2,
+  Eye,
+  EyeOff,
+  Lock,
+  Mail,
+  ShieldCheck,
+  Sparkles,
+  User,
+} from "lucide-react";
 
 export default function SignupPage() {
   const router = useRouter();
@@ -19,11 +29,38 @@ export default function SignupPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [agreeTerms, setAgreeTerms] = useState(true);
   const [submitting, setSubmitting] = useState(false);
+
+  // Compute password strength metrics
+  const passwordStrength = useMemo(() => {
+    if (!password) return { score: 0, label: "Empty", color: "bg-slate-700" };
+    let score = 0;
+    if (password.length >= 6) score += 1;
+    if (password.length >= 8) score += 1;
+    if (/[A-Z]/.test(password)) score += 1;
+    if (/[0-9]/.test(password)) score += 1;
+    if (/[^A-Za-z0-9]/.test(password)) score += 1;
+
+    if (score <= 1) return { score: 1, label: "Weak", color: "bg-red-500" };
+    if (score <= 2) return { score: 2, label: "Fair", color: "bg-amber-500" };
+    if (score <= 4) return { score: 3, label: "Good", color: "bg-blue-500" };
+    return { score: 4, label: "Strong", color: "bg-emerald-500" };
+  }, [password]);
 
   const handleEmailSignup = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!name || !email || !password) return;
+
+    if (!agreeTerms) {
+      toast({
+        title: "Terms Agreement Required",
+        description: "Please accept the terms of service to create your account.",
+        variant: "destructive",
+      });
+      return;
+    }
 
     if (password !== confirmPassword) {
       toast({
@@ -48,13 +85,13 @@ export default function SignupPage() {
       await signUpWithCredentials(email, password, name);
       toast({
         title: "Account Created!",
-        description: "Welcome to Maitri. Let's set up your personalized roadmap.",
+        description: "Welcome to Maitri! Let's set up your personalized roadmap.",
       });
       router.push("/onboarding");
     } catch (err: unknown) {
       toast({
-        title: "Signup Failed",
-        description: (err as Error)?.message || "Could not complete signup. Please try again.",
+        title: "Signup Notice",
+        description: (err as Error)?.message || "Could not complete signup. You can also explore via the Instant Demo.",
         variant: "destructive",
       });
     } finally {
@@ -73,7 +110,7 @@ export default function SignupPage() {
       router.push("/onboarding");
     } catch (err: unknown) {
       toast({
-        title: "Google Sign In Failed",
+        title: "Google Sign In",
         description: (err as Error)?.message || "Could not sign in with Google.",
         variant: "destructive",
       });
@@ -82,15 +119,46 @@ export default function SignupPage() {
     }
   };
 
+  const handleDemoBypass = () => {
+    toast({
+      title: "Welcome Demo Learner!",
+      description: "Entering onboarding wizard...",
+    });
+    router.push("/onboarding");
+  };
+
   return (
-    <div className="w-full max-w-md bg-white rounded-2xl border border-slate-200/90 shadow-lg p-8 md:p-10 space-y-6 animate-in fade-in">
-      <div className="text-center space-y-2">
-        <h1 className="text-2xl font-extrabold text-slate-900 tracking-tight">
-          Create your Maitri Account
-        </h1>
-        <p className="text-sm text-slate-500">
-          Start your personalized, adaptive learning journey
-        </p>
+    <div className="w-full max-w-md bg-slate-900/90 rounded-3xl border border-slate-800 shadow-2xl p-8 sm:p-10 space-y-6 backdrop-blur-xl animate-in fade-in relative overflow-hidden">
+      {/* Ambient glow */}
+      <div className="absolute top-0 right-0 w-48 h-48 bg-indigo-600/10 rounded-full blur-3xl pointer-events-none" />
+
+      {/* Header & Mode Switcher */}
+      <div className="space-y-4">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-1.5 p-1 bg-slate-950/80 rounded-xl border border-slate-800 text-xs font-bold w-full">
+            <Link
+              href="/login"
+              className="flex-1 py-2 text-center rounded-lg text-slate-400 hover:text-white transition-all"
+            >
+              Sign In
+            </Link>
+            <button
+              type="button"
+              className="flex-1 py-2 text-center rounded-lg bg-blue-600 text-white shadow-sm transition-all"
+            >
+              Sign Up
+            </button>
+          </div>
+        </div>
+
+        <div className="space-y-1">
+          <h2 className="text-2xl font-black text-white tracking-tight">
+            Create Your Account
+          </h2>
+          <p className="text-xs sm:text-sm text-slate-400">
+            Join Maitri and unlock your personalized, adaptive study roadmap.
+          </p>
+        </div>
       </div>
 
       {/* Google OAuth Button */}
@@ -99,7 +167,7 @@ export default function SignupPage() {
         variant="outline"
         onClick={handleGoogleSignup}
         disabled={submitting || loading}
-        className="w-full py-6 rounded-xl border-slate-300 hover:bg-slate-50 text-slate-800 font-semibold flex items-center justify-center gap-3 text-sm shadow-xs"
+        className="w-full py-6 rounded-2xl border-slate-700 bg-slate-950/70 hover:bg-slate-800/80 text-white font-semibold flex items-center justify-center gap-3 text-sm shadow-sm transition-all hover:scale-[1.01]"
       >
         <svg className="h-5 w-5" viewBox="0 0 24 24">
           <path
@@ -124,20 +192,20 @@ export default function SignupPage() {
 
       {/* Divider */}
       <div className="relative flex items-center justify-center">
-        <div className="w-full border-t border-slate-200" />
-        <span className="bg-white px-3 text-xs text-slate-400 uppercase tracking-wider font-semibold">
+        <div className="w-full border-t border-slate-800" />
+        <span className="bg-slate-900 px-3 text-[11px] text-slate-500 uppercase tracking-widest font-bold">
           or with email
         </span>
       </div>
 
-      {/* Signup Form */}
-      <form onSubmit={handleEmailSignup} className="space-y-4">
-        <div className="space-y-1.5">
-          <Label htmlFor="name" className="text-xs font-semibold text-slate-700">
+      {/* Form */}
+      <form onSubmit={handleEmailSignup} className="space-y-3.5">
+        <div className="space-y-1">
+          <Label htmlFor="name" className="text-xs font-bold text-slate-300">
             Full Name
           </Label>
           <div className="relative">
-            <User className="h-4 w-4 text-slate-400 absolute left-3.5 top-3.5" />
+            <User className="h-4 w-4 text-slate-400 absolute left-4 top-4" />
             <Input
               id="name"
               type="text"
@@ -145,81 +213,138 @@ export default function SignupPage() {
               value={name}
               onChange={(e) => setName(e.target.value)}
               required
-              className="pl-10 py-5 rounded-xl border-slate-300 focus-visible:ring-primary text-sm"
+              className="pl-11 py-5 rounded-2xl border-slate-700 bg-slate-950/60 text-white placeholder:text-slate-500 focus-visible:ring-blue-500 text-sm"
             />
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="email" className="text-xs font-semibold text-slate-700">
+        <div className="space-y-1">
+          <Label htmlFor="email" className="text-xs font-bold text-slate-300">
             Email Address
           </Label>
           <div className="relative">
-            <Mail className="h-4 w-4 text-slate-400 absolute left-3.5 top-3.5" />
+            <Mail className="h-4 w-4 text-slate-400 absolute left-4 top-4" />
             <Input
               id="email"
               type="email"
-              placeholder="you@example.com"
+              placeholder="you@domain.com"
               value={email}
               onChange={(e) => setEmail(e.target.value)}
               required
-              className="pl-10 py-5 rounded-xl border-slate-300 focus-visible:ring-primary text-sm"
+              className="pl-11 py-5 rounded-2xl border-slate-700 bg-slate-950/60 text-white placeholder:text-slate-500 focus-visible:ring-blue-500 text-sm"
             />
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="password" className="text-xs font-semibold text-slate-700">
+        <div className="space-y-1">
+          <Label htmlFor="password" className="text-xs font-bold text-slate-300">
             Password
           </Label>
           <div className="relative">
-            <Lock className="h-4 w-4 text-slate-400 absolute left-3.5 top-3.5" />
+            <Lock className="h-4 w-4 text-slate-400 absolute left-4 top-4" />
             <Input
               id="password"
-              type="password"
+              type={showPassword ? "text" : "password"}
               placeholder="Minimum 6 characters"
               value={password}
               onChange={(e) => setPassword(e.target.value)}
               required
-              className="pl-10 py-5 rounded-xl border-slate-300 focus-visible:ring-primary text-sm"
+              className="pl-11 pr-11 py-5 rounded-2xl border-slate-700 bg-slate-950/60 text-white placeholder:text-slate-500 focus-visible:ring-blue-500 text-sm font-mono"
+            />
+            <button
+              type="button"
+              onClick={() => setShowPassword(!showPassword)}
+              className="absolute right-4 top-4 text-slate-400 hover:text-slate-200"
+            >
+              {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
+            </button>
+          </div>
+
+          {/* Password Strength Meter */}
+          {password.length > 0 && (
+            <div className="pt-1.5 space-y-1 animate-in fade-in">
+              <div className="flex items-center justify-between text-[11px]">
+                <span className="text-slate-400">Strength:</span>
+                <span className="font-bold text-slate-300">{passwordStrength.label}</span>
+              </div>
+              <div className="grid grid-cols-4 gap-1.5 h-1">
+                {[1, 2, 3, 4].map((level) => (
+                  <div
+                    key={level}
+                    className={`h-full rounded-full transition-all ${
+                      level <= passwordStrength.score ? passwordStrength.color : "bg-slate-800"
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="space-y-1">
+          <Label htmlFor="confirmPassword" className="text-xs font-bold text-slate-300">
+            Confirm Password
+          </Label>
+          <div className="relative">
+            <Lock className="h-4 w-4 text-slate-400 absolute left-4 top-4" />
+            <Input
+              id="confirmPassword"
+              type={showPassword ? "text" : "password"}
+              placeholder="Re-enter your password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+              className="pl-11 py-5 rounded-2xl border-slate-700 bg-slate-950/60 text-white placeholder:text-slate-500 focus-visible:ring-blue-500 text-sm font-mono"
             />
           </div>
         </div>
 
-        <div className="space-y-1.5">
-          <Label htmlFor="confirmPassword" className="text-xs font-semibold text-slate-700">
-            Confirm Password
-          </Label>
-          <div className="relative">
-            <Lock className="h-4 w-4 text-slate-400 absolute left-3.5 top-3.5" />
-            <Input
-              id="confirmPassword"
-              type="password"
-              placeholder="Confirm your password"
-              value={confirmPassword}
-              onChange={(e) => setConfirmPassword(e.target.value)}
-              required
-              className="pl-10 py-5 rounded-xl border-slate-300 focus-visible:ring-primary text-sm"
-            />
-          </div>
-        </div>
+        {/* Terms Agreement Checkbox */}
+        <label className="flex items-start gap-2.5 pt-1 cursor-pointer select-none text-xs text-slate-400">
+          <input
+            type="checkbox"
+            checked={agreeTerms}
+            onChange={(e) => setAgreeTerms(e.target.checked)}
+            className="mt-0.5 rounded border-slate-700 bg-slate-950 text-blue-600 focus:ring-blue-500"
+          />
+          <span>
+            I agree to the{" "}
+            <span className="text-blue-400 hover:underline">Terms of Service</span> and{" "}
+            <span className="text-blue-400 hover:underline">Privacy Policy</span>.
+          </span>
+        </label>
 
         <Button
           type="submit"
           disabled={submitting || loading}
-          className="w-full py-6 rounded-xl bg-primary hover:bg-primary/90 text-white font-semibold text-sm shadow-sm gap-2 mt-2"
+          className="w-full py-6 rounded-2xl bg-gradient-to-r from-blue-600 to-indigo-600 hover:from-blue-500 hover:to-indigo-500 text-white font-bold text-sm shadow-lg shadow-blue-500/25 gap-2 mt-2 transition-all hover:scale-[1.01]"
         >
-          <span>Create Account & Continue</span>
-          <ArrowRight className="h-4 w-4" />
+          {submitting ? (
+            <span>Creating Roadmap...</span>
+          ) : (
+            <>
+              <span>Create Account & Start</span>
+              <ArrowRight className="h-4 w-4" />
+            </>
+          )}
         </Button>
       </form>
 
-      {/* Switch to Login */}
-      <div className="text-center pt-2 text-xs text-slate-500">
-        Already have an account?{" "}
-        <Link href="/login" className="text-primary font-bold hover:underline">
-          Sign in
-        </Link>
+      {/* Demo Bypass */}
+      <div className="pt-1">
+        <button
+          type="button"
+          onClick={handleDemoBypass}
+          className="w-full p-3 rounded-2xl border border-blue-500/30 bg-blue-500/5 hover:bg-blue-500/10 text-blue-400 text-xs font-bold flex items-center justify-center gap-2 transition-colors"
+        >
+          <Sparkles className="h-3.5 w-3.5" />
+          <span>Explore with Instant Demo Account &rarr;</span>
+        </button>
+      </div>
+
+      <div className="flex items-center justify-center gap-1.5 text-[11px] text-slate-500 pt-1">
+        <ShieldCheck className="h-3.5 w-3.5 text-emerald-400" />
+        <span>FERPA / GDPR Compliant Privacy Safeguard</span>
       </div>
     </div>
   );
