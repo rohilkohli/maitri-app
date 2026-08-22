@@ -264,9 +264,6 @@ export default function OnboardingPage() {
         topics: finalTopics,
       });
 
-      // 4. Save Topics to localStorage for dashboard retrieval
-      localStorage.setItem(`maitri-topics-${userId}`, JSON.stringify(finalTopics));
-
       toast({
         title: "Personalized Roadmap Initialized!",
         description: "Proceeding to your diagnostic baseline assessment.",

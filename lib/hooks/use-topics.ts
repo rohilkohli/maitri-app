@@ -100,63 +100,34 @@ export function useTopics(userId: string | null | undefined) {
 
       setLoading(true);
       try {
-        // First, try to load from Firebase
+        // Load courses from Firebase
         const rawCourses = await getUserCourses(effectiveUserId);
+
         if (rawCourses && rawCourses.length > 0) {
           const parsedCourses: Course[] = rawCourses.map((c: any) => ({
             id: c.id,
             userId: c.userId as string,
             title: c.title as string,
             syllabusUrl: c.syllabusUrl as string | undefined,
-            topics: (c.topics as Topic[]) || DEFAULT_SAMPLE_TOPICS,
+            topics: (c.topics as Topic[]) || [],
             createdAt: c.createdAt ? new Date(c.createdAt.toDate?.() || c.createdAt) : new Date(),
           }));
+
           setCourses(parsedCourses);
           setActiveCourse(parsedCourses[0]);
-          if (parsedCourses[0]?.topics?.length) {
+
+          // Use topics from the most recent course
+          if (parsedCourses[0]?.topics?.length > 0) {
             setTopics(parsedCourses[0].topics);
-            // Also save to localStorage as backup
-            localStorage.setItem(`maitri-topics-${effectiveUserId}`, JSON.stringify(parsedCourses[0].topics));
-            setLoading(false);
-            return;
+          } else {
+            setTopics(DEFAULT_SAMPLE_TOPICS);
           }
+        } else {
+          // No courses found - use defaults
+          setTopics(DEFAULT_SAMPLE_TOPICS);
         }
-
-        // Fallback: Try to load from localStorage
-        const savedTopics = localStorage.getItem(`maitri-topics-${effectiveUserId}`);
-        if (savedTopics) {
-          try {
-            const parsedTopics = JSON.parse(savedTopics) as Topic[];
-            if (parsedTopics && parsedTopics.length > 0) {
-              setTopics(parsedTopics);
-              setLoading(false);
-              return;
-            }
-          } catch {
-            // Invalid JSON, ignore
-          }
-        }
-
-        // Final fallback: use default topics
-        setTopics(DEFAULT_SAMPLE_TOPICS);
       } catch (err) {
-        console.warn("Could not load user courses, trying localStorage:", err);
-
-        // Try localStorage on error
-        const savedTopics = localStorage.getItem(`maitri-topics-${effectiveUserId}`);
-        if (savedTopics) {
-          try {
-            const parsedTopics = JSON.parse(savedTopics) as Topic[];
-            if (parsedTopics && parsedTopics.length > 0) {
-              setTopics(parsedTopics);
-              setLoading(false);
-              return;
-            }
-          } catch {
-            // Invalid JSON, ignore
-          }
-        }
-
+        console.error("Error loading courses from Firebase:", err);
         setTopics(DEFAULT_SAMPLE_TOPICS);
       } finally {
         setLoading(false);

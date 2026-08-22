@@ -127,14 +127,35 @@ export async function saveCourse(courseId: string, data: Record<string, unknown>
 }
 
 export async function getUserCourses(userId: string) {
-  const q = query(
-    collection(db, "courses"),
-    where("userId", "==", userId),
-    orderBy("createdAt", "desc"),
-    limit(10)
-  );
-  const snap = await getDocs(q);
-  return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+  try {
+    // First try the query approach
+    const q = query(
+      collection(db, "courses"),
+      where("userId", "==", userId),
+      orderBy("createdAt", "desc"),
+      limit(10)
+    );
+    const snap = await getDocs(q);
+    if (snap.docs.length > 0) {
+      return snap.docs.map((d) => ({ id: d.id, ...d.data() }));
+    }
+  } catch (err) {
+    // Query might fail if index doesn't exist, try direct fetch
+    console.warn("Query failed, trying direct fetch:", err);
+  }
+
+  // Fallback: fetch course directly by known ID pattern
+  try {
+    const courseRef = doc(db, "courses", `course-${userId}`);
+    const courseSnap = await getDoc(courseRef);
+    if (courseSnap.exists()) {
+      return [{ id: courseSnap.id, ...courseSnap.data() }];
+    }
+  } catch (err) {
+    console.warn("Direct course fetch failed:", err);
+  }
+
+  return [];
 }
 
 export async function getCourse(courseId: string) {
