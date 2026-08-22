@@ -3,7 +3,9 @@ import { GoogleGenerativeAI } from "@google/generative-ai";
 const apiKey = process.env.GEMINI_API_KEY || "";
 const genAI = new GoogleGenerativeAI(apiKey);
 
-export function getGeminiModel(modelName: string = "gemini-3.6-flash") {
+const defaultModel = process.env.GEMINI_MODEL || "gemini-2.5-flash";
+
+export function getGeminiModel(modelName: string = defaultModel) {
   return genAI.getGenerativeModel({
     model: modelName,
   });
@@ -15,7 +17,7 @@ export function getGeminiModel(modelName: string = "gemini-3.6-flash") {
 export async function generateStructuredJson<T>(
   prompt: string,
   systemInstruction?: string,
-  modelName: string = "gemini-3.6-flash"
+  modelName: string = defaultModel
 ): Promise<T> {
   if (!apiKey) {
     throw new Error("GEMINI_API_KEY is not configured in environment variables.");

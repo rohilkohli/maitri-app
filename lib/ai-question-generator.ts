@@ -31,8 +31,9 @@ export async function generateDynamicQuestions(params: GenerateQuestionsParams):
 
   try {
     const genAI = new GoogleGenerativeAI(apiKey);
+    const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
     const model = genAI.getGenerativeModel({
-      model: "gemini-3.6-flash",
+      model: modelName,
       generationConfig: {
         responseMimeType: "application/json",
         temperature: 0.7,

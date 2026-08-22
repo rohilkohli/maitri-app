@@ -8,7 +8,7 @@ export async function extractTextFromImage(imageBase64: string, mimeType: string
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
-  const model = genAI.getGenerativeModel({ model: "gemini-3.6-flash" });
+  const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" });
 
   const prompt = `You are an OCR assistant. Extract ALL text from this image of a syllabus or curriculum document.
 
@@ -47,8 +47,9 @@ export async function extractTopicsFromText(text: string): Promise<{
   }
 
   const genAI = new GoogleGenerativeAI(apiKey);
+  const modelName = process.env.GEMINI_MODEL || "gemini-2.5-flash";
   const model = genAI.getGenerativeModel({
-    model: "gemini-3.6-flash",
+    model: modelName,
     generationConfig: {
       responseMimeType: "application/json",
       temperature: 0.2,
