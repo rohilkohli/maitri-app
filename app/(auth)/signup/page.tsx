@@ -261,24 +261,29 @@ export default function SignupPage() {
           </div>
 
           {/* Password Strength Meter */}
-          {password.length > 0 && (
-            <div className="pt-1.5 space-y-1 animate-in fade-in">
-              <div className="flex items-center justify-between text-[11px]">
-                <span className="text-slate-400">Strength:</span>
-                <span className="font-bold text-slate-300">{passwordStrength.label}</span>
-              </div>
-              <div className="grid grid-cols-4 gap-1.5 h-1">
-                {[1, 2, 3, 4].map((level) => (
-                  <div
-                    key={level}
-                    className={`h-full rounded-full transition-all ${
-                      level <= passwordStrength.score ? passwordStrength.color : "bg-slate-800"
-                    }`}
-                  />
-                ))}
-              </div>
+          <div className="pt-1.5 space-y-1.5">
+            <div className="flex items-center justify-between text-[11px]">
+              <span className="text-slate-400">Security Strength:</span>
+              <span className={`font-bold ${password ? "text-slate-200" : "text-slate-500"}`}>
+                {password ? passwordStrength.label : "Enter password"}
+              </span>
             </div>
-          )}
+            <div className="grid grid-cols-4 gap-1.5 h-1.5">
+              {[1, 2, 3, 4].map((level) => (
+                <div
+                  key={level}
+                  className={`h-full rounded-full transition-all duration-300 ${
+                    password && level <= passwordStrength.score ? passwordStrength.color : "bg-slate-800"
+                  }`}
+                />
+              ))}
+            </div>
+            {password.length > 0 && password.length < 6 && (
+              <p className="text-[10px] text-amber-400 font-medium">
+                Tip: Minimum 6 characters required (8+ recommended with numbers)
+              </p>
+            )}
+          </div>
         </div>
 
         <div className="space-y-1">
