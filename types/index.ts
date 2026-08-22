@@ -1,5 +1,11 @@
+/**
+ * Core type definitions for the Maitri Adaptive Learning Platform
+ * @module types
+ */
+
 // ===== ENUMS =====
 
+/** Represents the learner's mastery status for a topic */
 export enum TopicStatus {
   NOT_ASSESSED = "not_assessed",
   WEAK = "weak",
